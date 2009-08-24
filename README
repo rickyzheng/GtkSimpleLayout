@@ -1,0 +1,9 @@
+== GtkSimpleLayout
+
+The GTK Simple Layout is a helper module for RubyGnome2, it provides a builder
+style layout producing much better readable UI codes.
+
+Copy Right 2009, Ricky Zheng <ricky_gz_zheng@yahoo.co.nz>
+
+Licence: GPLv2
+
