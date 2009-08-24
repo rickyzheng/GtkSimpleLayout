@@ -1,20 +1,8 @@
-== GtkSimpleLayout
-
-The GTK Simple Layout is a helper module for RubyGnome2, it provides a builder
-style layout producing much better readable UI codes.
-
-Copy Right 2009, Ricky Zheng <ricky_gz_zheng@yahoo.co.nz>
-
-Licence: GPLv2
-
-== Example
-
 require 'gtk2'
 require 'simple_layout'
 
 class MyWin < Gtk
   include SimpleLayout::Base
-
   def initialize
     add my_layout
     signal_connect('destroy') do
@@ -27,8 +15,8 @@ class MyWin < Gtk
       frame 'frame 1' do
         hbox do
           label 'Label 1'
-          button 'Fixed button'
-          button "I'm flexiable", :layout => [true, true]
+          button 'This is a fixed button'
+          button 'I\'m flexiable', :layout => [true, true]
         end
       end
       frame 'frame 2' do
@@ -39,7 +27,6 @@ class MyWin < Gtk
       end
     end
   end
-
 end
 
 MyWin.new.show_all
