@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'GtkSimpleLayout'
-  s.version = '0.0.1'
+  s.version = '0.1.0'
   s.has_rdoc = false
   s.extra_rdoc_files = ['README', 'LICENSE']
   s.summary = 'A simple builder style layout helper for RubyGnome2'
