@@ -150,6 +150,14 @@ module SimpleLayout
       @component_children ||= {}
       @component_children[name]
     end
+    
+    def group(name)
+      cnt, _ = @containers.last
+      @component_children[name] ||= []
+      @containers.push [cnt, @component_children[name]]
+      yield cnt if block_given?
+      @containers.pop
+    end
 
     def table(*args, &block)
       create_component(Gtk::Table, args, block)
@@ -199,14 +207,14 @@ module SimpleLayout
 
       options.each do |k, v|
         if v.is_a?(Array)
-          w.send(k.to_s, *v)
+          w.send(k.to_s, *v) if w.respond_to?(k.to_s)
         else
-          w.send(k.to_s + '=', v)
+          w.send(k.to_s + '=', v) if w.respond_to?(k.to_s + '=')
         end
       end
 
       @components[name] = w if name
-      @component_children[group_name] = [] if group_name
+      @component_children[group_name] ||= [] if group_name
 
       if block # if given block, it's a container as well
         @containers.push [w, @component_children[group_name]]
