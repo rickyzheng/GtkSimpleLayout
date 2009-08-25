@@ -99,13 +99,18 @@ module SimpleLayout
       end
     end
 
-    # add a widget to container (and/or become a new container as well)
+    # add a widget to container (and/or become a new container as well).
+    # do not call this function directly unless knowing what you are doing
     def add_component(w, layout_opt = nil)
       container, _= @containers.last
       if @pass_on_stack.last.nil? || @pass_on_stack.last[0] == false
         if container.is_a?(Gtk::Box)
           layout_opt ||= [false, false, 0]
-          container.pack_start w, *layout_opt
+          pack_method = 'pack_start'
+          if layout_opt.first.is_a?(Symbol)
+            pack_method = 'pack_end' if layout_opt.shift == :end
+          end
+          container.send(pack_method, w, *layout_opt)
         elsif container.is_a?(Gtk::Fixed) || container.is_a?(Gtk::Layout)
           layout_opt ||= [0, 0]
           container.put w, *layout_opt
@@ -142,25 +147,24 @@ module SimpleLayout
       end
     end
 
+    # get component with given name
     def component(name)
       @components[name]
     end
 
+    # return children array of a component or group
     def component_children(name)
       @component_children ||= {}
       @component_children[name]
     end
-    
+
+    # group the children
     def group(name)
       cnt, _ = @containers.last
       @component_children[name] ||= []
       @containers.push [cnt, @component_children[name]]
       yield cnt if block_given?
       @containers.pop
-    end
-
-    def table(*args, &block)
-      create_component(Gtk::Table, args, block)
     end
 
     # for HPaned and VPaned container
@@ -176,12 +180,11 @@ module SimpleLayout
       container_pass_on(Gtk::Notebook, 'append_page', text, block)
     end
 
-    # for Table
+    # for Table container
     def grid_flx(left, right, top, bottom, *args, &block)
       args.push block
       container_pass_on(Gtk::Table, 'attach', left, right, top, bottom, *args)
     end
-
     def grid(left, top, *args, &block)
       args.push block
       container_pass_on(Gtk::Table, 'attach', left, left + 1, top, top + 1, *args)
