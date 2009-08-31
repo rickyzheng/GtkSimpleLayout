@@ -24,21 +24,8 @@ class MyWin < Gtk::Window
 
   def my_layout
     vbox do
-      frame 'frame 1' do
-        hbox do
-          label 'Label 1'
-          button 'Button 1, fixed'
-          button "Button 2, I'm flexiable", :layout => [true, true]
-        end
-      end
-      frame 'frame 2' do
-        vbox do
-          label 'Label 2'
-          label 'Label 3'
-          button 'Button 3'
-          button 'Button 4'
-        end
-      end
+      label 'Hello'
+      button 'World !'
     end
   end
 end

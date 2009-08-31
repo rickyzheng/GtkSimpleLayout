@@ -34,26 +34,29 @@ class MyWin < Gtk::Window
             button 'MS'
             button 'M+'
           end
-          table 5, 4, :layout => [true, true] do
-            row_idx = 0
-            [ ['7', '8', '9', '/', 'sqt'],
-              ['4', '5', '6', '*', '%'],
-              ['1', '2', '3', '-', '1/x'],
-              ['0', '+/=', '.', '+', '=']].each do |cols|
-              col_idx = 0
-              cols.each do |txt|
-                grid col_idx, row_idx do
-                  button txt, :set_size_request => [20, 20]
-                end
-                col_idx += 1
-              end
-              row_idx += 1
-            end
+          with_attr :layout => [true, true] do
+            number_and_operators_layout
           end
         end
       end
     end
   end
+
+  def number_and_operators_layout
+    vbox do
+      [ ['7', '8', '9', '/', 'sqt'],
+        ['4', '5', '6', '*', '%'],
+        ['1', '2', '3', '-', '1/x'],
+        ['0', '+/=', '.', '+', '=']].each do |cols|
+        hbox :layout => [true, true] do
+          cols.each do |txt|
+            button txt, :set_size_request => [20, 20], :layout => [true, true]
+          end
+        end
+      end
+    end
+  end
+
 end
 
 MyWin.new.show_all
