@@ -4,6 +4,22 @@ module SimpleLayout
 
   class LayoutError < Exception; end
 
+  class EventHandlerProxy
+    def initialize(host, evt, &block)
+      @host = host
+      @evt = evt
+      self << block if block
+    end
+    def <<(v)
+      if v && v.respond_to?('call')
+        @host.signal_connect(@evt) do |*args|
+          v.call(*args)
+        end
+      end
+      self
+    end
+  end
+
   module Base
     def Base.included(base)
       {
@@ -102,7 +118,8 @@ module SimpleLayout
     # add a widget to container (and/or become a new container as well).
     # do not call this function directly unless knowing what you are doing
     def add_component(w, layout_opt = nil)
-      container, _= @containers.last
+      container, g = @containers.last
+      g.push w if g
       if @pass_on_stack.last.nil? || @pass_on_stack.last[0] == false
         if container.is_a?(Gtk::Box)
           layout_opt ||= [false, false, 0]
@@ -191,6 +208,18 @@ module SimpleLayout
     end
 
     private
+
+    def add_singleton_event_map(w)
+      def w.method_missing(sym, *args, &block)
+        if sym.to_s =~ /^on_([^=]+)(=*)$/
+          block ||= args.last
+          return EventHandlerProxy.new(self, $1, &block)
+        else
+          raise NoMethodError
+        end
+      end
+    end
+
     def create_component(component_class, args, block)
 
       @containers ||= []
@@ -204,6 +233,8 @@ module SimpleLayout
       options.merge! @common_attribute.last if @common_attribute.last
 
       w = component_class.new(*args)
+      add_singleton_event_map(w) # so that you can use: w.on_clicked{|*args| ... }
+      
       name = options.delete(:id)
       group_name = options.delete(:gid) || name
       layout_opt = options.delete(:layout)
@@ -230,9 +261,7 @@ module SimpleLayout
       end
 
       if @containers.size > 0
-        _, g = @containers.last
-        g.push w if g  # put myself as parent's children group
-        add_component(w, layout_opt) # add myself to parent container
+        add_component(w, layout_opt) # add myself to parent
       end
       w
     end

@@ -1,5 +1,5 @@
 require 'gtk2'
-require '../lib/simple_layout'
+require File.dirname(__FILE__) + '/../lib/simple_layout'
 
 class MyWin < Gtk::Window
 	include SimpleLayout::Base
