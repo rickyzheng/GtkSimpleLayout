@@ -262,6 +262,8 @@ module SimpleLayout
 
       if @containers.size > 0
         add_component(w, layout_opt) # add myself to parent
+      else
+        @components[:self] = self  # add host as ':self'
       end
       w
     end

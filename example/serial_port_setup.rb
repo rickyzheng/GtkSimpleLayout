@@ -34,10 +34,7 @@ class MyWin < Gtk::Window
     expose_components()
 
 		init_ui
-
-		signal_connect('destroy') do
-			Gtk.main_quit
-		end
+    
 	end
 
 	def init_ui
@@ -74,6 +71,10 @@ class MyWin < Gtk::Window
   def btn_close_on_clicked(*_)
 			[comb_baudrate, comb_port, btn_open].each {|w| w.sensitive = true}
 			btn_close.sensitive = false
+  end
+
+  def self_on_destroy(*_)
+    Gtk.main_quit
   end
 
 end

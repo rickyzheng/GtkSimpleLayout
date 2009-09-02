@@ -19,10 +19,6 @@ class MyWin < Gtk::Window
 
     register_auto_events()  # enable the auto event map
 
-    signal_connect('destroy') do
-      Gtk.main_quit
-    end
-
     # normal event handler
     component(:btn_hi).on_clicked do
       puts "hi clicked 1"
@@ -51,6 +47,11 @@ class MyWin < Gtk::Window
 
   def btn_quit_on_clicked(w)
     self.destroy
+  end
+
+  def self_on_destroy(*_)
+    puts "program quit"
+    Gtk.main_quit
   end
 
 end
