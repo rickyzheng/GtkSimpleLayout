@@ -12,17 +12,9 @@ class MyWin < Gtk::Window
   end
 
   def my_layout
-    vbox do
-      hbox do
-        label '-- Hello --'
-        button 'Horizontal'
-        label '-- World !--'
-      end
-      vbox do
-        label '|| Hello ||'
-        button 'Vertical'
-        label '|| World !||'
-      end
+    hbox do
+      label 'Hello, '
+      button 'World !'
     end
   end
 end
