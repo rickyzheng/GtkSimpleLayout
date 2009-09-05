@@ -20,6 +20,14 @@ module SimpleLayout
     end
   end
 
+  module ExtClassMethod
+    def inspector_opt(opt = {})
+      @insp_opt ||= {}
+      @insp_opt.merge! opt
+      @insp_opt
+    end
+  end
+
   module Base
     def Base.included(base)
       {
@@ -89,6 +97,7 @@ module SimpleLayout
           create_component(v, args, block)
         end
       end
+      base.extend(ExtClassMethod)
     end
 
     public
@@ -117,9 +126,7 @@ module SimpleLayout
 
     # add a widget to container (and/or become a new container as well).
     # do not call this function directly unless knowing what you are doing
-    def add_component(w, layout_opt = nil)
-      container, g = @containers.last
-      g.push w if g
+    def add_component(w, container, layout_opt = nil)
       if @pass_on_stack.last.nil? || @pass_on_stack.last[0] == false
         if container.is_a?(Gtk::Box)
           layout_opt ||= [false, false, 0]
@@ -177,9 +184,18 @@ module SimpleLayout
 
     # group the children
     def group(name)
-      cnt, _ = @containers.last
-      @component_children[name] ||= []
-      @containers.push [cnt, @component_children[name]]
+      cnt, misc = @containers.last
+      gs = (name ? [name].flatten : [])
+      gs.each{|g| @component_children[g] ||= [] }
+      m = { :groups => gs,
+            :virtual => true,
+            :sibling => misc[:sibling],
+            :insp => misc[:insp],
+            :layout => misc[:layout],
+            :options => misc[:options],
+            :name => nil,
+          }
+      @containers.push [cnt, m]
       yield cnt if block_given?
       @containers.pop
     end
@@ -220,6 +236,57 @@ module SimpleLayout
       end
     end
 
+    def make_inspect_evb(cnt_misc, w, name, layout_opt, options)
+      insp_evb = nil
+      insp_opt = self.class.inspector_opt
+      if insp_opt[:enable] || ENV['INSPECTOR_ENABLE'] == "1"
+        rgb = 0xffff - @containers.size * 0x1000
+        insp_evb = evb = Gtk::EventBox.new
+        sub_evb = Gtk::EventBox.new
+        sub_evb.add w
+        evb.add sub_evb
+        if insp_opt[:border_width]
+          sub_evb.border_width = insp_opt[:border_width]
+        elsif ENV['INSPECTOR_BORDER_WIDTH']
+          sub_evb.border_width = ENV['INSPECTOR_BORDER_WIDTH'].to_i
+        end
+        evb.modify_bg Gtk::STATE_NORMAL, Gdk::Color.new(rgb, rgb, rgb)
+        evbs = []
+        tips = ""
+        @containers.size.times do |i|
+          cnt, m = @containers[i]
+          if m[:insp] && (not m[:virtual])
+            evbs << m[:insp]
+            tips << "<b>container[#{i}]: #{cnt.class}#{m[:name] ? " (#{m[:name]})" : ''}</b>\n"
+            tips << "  layout: #{m[:layout].inspect}\n" if m[:layout]
+            tips << "  options: #{m[:options].inspect}\n" if m[:options] && m[:options].size > 0
+            tips << "  groups: #{m[:groups].inspect}\n" if m[:groups].size > 0
+          end
+        end
+        evbs << evb
+        tips << "<b>widget: #{w.class}#{name ? " (#{name})" : ''}</b>\n"
+        tips << "  layout: #{layout_opt.inspect}\n" if layout_opt
+        tips << "  options: #{options.inspect}\n" if options && options.size > 0
+        tips << "  groups: #{cnt_misc[:groups].inspect}\n" if cnt_misc && cnt_misc[:groups].size > 0
+
+        evb.signal_connect('event') do |b, evt|
+          b.tooltip_markup = tips
+          case evt.event_type
+          when Gdk::Event::ENTER_NOTIFY, Gdk::Event::LEAVE_NOTIFY            
+            evbs.size.times do |i|
+              rgb = 0xffff - i * 0x1000
+              if evt.event_type == Gdk::Event::ENTER_NOTIFY
+                evbs[i].modify_bg Gtk::STATE_NORMAL, Gdk::Color.new(rgb, rgb - 0x2000, rgb - 0x2000)
+              elsif evt.event_type == Gdk::Event::LEAVE_NOTIFY
+                evbs[i].modify_bg Gtk::STATE_NORMAL, Gdk::Color.new(rgb, rgb, rgb)
+              end
+            end
+          end
+        end
+      end
+      insp_evb
+    end
+
     def create_component(component_class, args, block)
 
       @containers ||= []
@@ -248,10 +315,26 @@ module SimpleLayout
       end
 
       @components[name] = w if name
-      @component_children[group_name] ||= [] if group_name
+      gs = (group_name ? [group_name].flatten : [])
+      gs.each{|g| @component_children[g] ||= [] }
+
+      misc = nil
+      if @containers.size > 0
+        container, misc = @containers.last
+        misc[:groups].each{ |g| @component_children[g].push w }
+        misc[:sibling] += 1
+      end
+      insp_evb = make_inspect_evb(misc, w, name, layout_opt, options)
 
       if block # if given block, it's a container as well
-        @containers.push [w, @component_children[group_name]]
+        m = { :groups => gs,
+              :sibling => 0,
+              :insp => insp_evb,
+              :name => name,
+              :layout => layout_opt,
+              :options => options,
+            }
+        @containers.push [w, m]
         @pass_on_stack.push [false, nil]
         @common_attribute.push({})
         block.call(w) if block
@@ -261,11 +344,11 @@ module SimpleLayout
       end
 
       if @containers.size > 0
-        add_component(w, layout_opt) # add myself to parent
+        add_component(insp_evb || w, container, layout_opt) # add myself to parent
       else
         @components[:self] = self  # add host as ':self'
       end
-      w
+      insp_evb || w
     end
 
     def container_pass_on(container_class, fun_name, *args)

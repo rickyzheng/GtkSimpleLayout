@@ -3,6 +3,7 @@ require File.dirname(__FILE__) + '/../lib/simple_layout'
 
 class MyWin < Gtk::Window
   include SimpleLayout::Base
+  
   def initialize
     super
     add my_layout
@@ -47,10 +48,10 @@ class MyWin < Gtk::Window
       [ ['7', '8', '9', '/', 'sqt'],
         ['4', '5', '6', '*', '%'],
         ['1', '2', '3', '-', '1/x'],
-        ['0', '+/=', '.', '+', '=']].each do |cols|
+        ['0', '+/-', '.', '+', '=']].each do |cols|
         hbox :layout => [true, true] do
           cols.each do |txt|
-            button txt, :set_size_request => [20, 20], :layout => [true, true]
+            button txt, :id => txt.to_sym, :set_size_request => [20, 20], :layout => [true, true]
           end
         end
       end

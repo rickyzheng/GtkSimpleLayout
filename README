@@ -1,13 +1,26 @@
-== GtkSimpleLayout
+== GtkSimpleLayout ==
 
-The GTK Simple Layout is a helper module for RubyGnome2, it provides a builder
+The GtkSimpleLayout is a helper module for RubyGnome2, it provides a builder
 style layout producing much better readable UI codes.
 
 Copy Right 2009, Ricky Zheng <ricky_gz_zheng@yahoo.co.nz>
 
 Licence: GPLv2
 
-== Example
+== Main functions ==
+* builder-style layout
+* UI group
+* attribute proxy
+* event handler map
+* sigleton event helper
+* component reference by name
+* inspector
+
+About inspector:
+ - set environment variable INSPECTOR_ENABLE=1 will enable inspector
+ - inspector boxes border width can be setup by e.g. INSPECTOR_BORDER_WIDTH=5
+
+== Example ==
 
 require 'gtk2'
 require 'simple_layout'
