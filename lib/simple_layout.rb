@@ -29,11 +29,9 @@ module SimpleLayout
       @insp_opt.merge! opt if opt
       @insp_opt
     end
-  end
 
-  module Base
-    def Base.included(base)
-      {
+    def layout_class_maps
+      @layout_class_maps_hash ||= {
         'image' => Gtk::Image,
         'label' => Gtk::Label,
         'progress_bar' => Gtk::ProgressBar,
@@ -95,12 +93,19 @@ module SimpleLayout
         'gamma_curve' => Gtk::GammaCurve,
         'hruler' => Gtk::HRuler,
         'vruner' => Gtk::VRuler,
-      }.each do |k, v|
+      }
+    end
+
+  end
+
+  module Base
+    def Base.included(base)
+      base.extend(ExtClassMethod)
+      base.layout_class_maps.each do |k, v|
         define_method(k) do |*args, &block|
           create_component(v, args, block)
         end
       end
-      base.extend(ExtClassMethod)
     end
 
     public
@@ -229,12 +234,15 @@ module SimpleLayout
     private
 
     def add_singleton_event_map(w)
-      def w.method_missing(sym, *args, &block)
-        if sym.to_s =~ /^on_([^=]+)(=*)$/
-          block ||= args.last
-          return EventHandlerProxy.new(self, $1, &block)
-        else
-          raise NoMethodError
+      class << w
+        alias_method :simple_layout_singleton_method_missing, :method_missing
+        def method_missing(sym, *args, &block)
+          if sym.to_s =~ /^on_([^=]+)(=*)$/
+            block ||= args.last
+            return EventHandlerProxy.new(self, $1, &block)
+          else
+            simple_layout_singleton_method_missing(sym, *args, &block)
+          end
         end
       end
     end
@@ -363,5 +371,39 @@ module SimpleLayout
         raise LayoutError, "class #{container_class} expected"
       end
     end
+
+    alias_method :simple_layout_method_missing_alias, :method_missing
+
+    def method_missing(sym, *args, &block)
+      if sym =~ /^(.+)_in_(.+)$/
+        maps = self.class.layout_class_maps
+        inner, outter = $1, $2
+        if maps[inner] && maps[outter]
+          if args.last.is_a?(Hash)
+            options = {}
+            options = args.pop if args.last.is_a?(Hash)
+
+            # default args pass to inner component, execpt:
+            #  :layout pass to outter :layout
+            #  :inner_layout pass to inner :layout
+            #  :outter_args pass to outter args
+            outter_args, outter_layout_opt, options[:layout] =
+              options.delete(:outter_args), options.delete(:layout), options.delete(:inner_layout)
+
+            outter_args = (outter_args ? [outter_args] : []) unless outter_args.is_a?(Array)
+            outter_args << {} unless outter_args.last.is_a?(Hash)
+            outter_args.last[:layout] ||= outter_layout_opt
+            args.push options # push back inner options
+          end
+
+          inner_proc = Proc.new do
+            create_component(maps[inner], args, block)
+          end
+          return create_component(maps[outter], outter_args || [], inner_proc)
+        end
+      end
+      simple_layout_method_missing_alias(sym, *args, &block)
+    end
+
   end
 end
