@@ -21,9 +21,12 @@ module SimpleLayout
   end
 
   module ExtClassMethod
-    def inspector_opt(opt = {})
-      @insp_opt ||= {}
-      @insp_opt.merge! opt
+    def inspector_opt(opt = nil)
+      @insp_opt ||= {
+                      :enable => (ENV['INSPECTOR_ENABLE'] == '1'),
+                      :border_width => (ENV['INSPECTOR_BORDER_WIDTH'] || 5)
+                    }
+      @insp_opt.merge! opt if opt
       @insp_opt
     end
   end
@@ -236,20 +239,17 @@ module SimpleLayout
       end
     end
 
+    # create the inspector eventbox for widget
     def make_inspect_evb(cnt_misc, w, name, layout_opt, options)
       insp_evb = nil
       insp_opt = self.class.inspector_opt
-      if insp_opt[:enable] || ENV['INSPECTOR_ENABLE'] == "1"
+      if insp_opt[:enable]
         rgb = 0xffff - @containers.size * 0x1000
         insp_evb = evb = Gtk::EventBox.new
         sub_evb = Gtk::EventBox.new
         sub_evb.add w
         evb.add sub_evb
-        if insp_opt[:border_width]
-          sub_evb.border_width = insp_opt[:border_width]
-        elsif ENV['INSPECTOR_BORDER_WIDTH']
-          sub_evb.border_width = ENV['INSPECTOR_BORDER_WIDTH'].to_i
-        end
+        sub_evb.border_width = insp_opt[:border_width]
         evb.modify_bg Gtk::STATE_NORMAL, Gdk::Color.new(rgb, rgb, rgb)
         evbs = []
         tips = ""
@@ -287,6 +287,7 @@ module SimpleLayout
       insp_evb
     end
 
+    # create a new UI component (container or widget)
     def create_component(component_class, args, block)
 
       @containers ||= []
