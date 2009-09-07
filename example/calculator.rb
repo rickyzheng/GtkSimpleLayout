@@ -51,7 +51,7 @@ class MyWin < Gtk::Window
         ['0', '+/-', '.', '+', '=']].each do |cols|
         hbox :layout => [true, true] do
           cols.each do |txt|
-            button txt, :id => txt.to_sym, :set_size_request => [20, 20], :layout => [true, true]
+            button txt, :id => txt.to_sym, :set_size_request => [30, 30], :layout => [true, true]
           end
         end
       end

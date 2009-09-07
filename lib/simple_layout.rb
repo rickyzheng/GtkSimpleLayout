@@ -231,6 +231,49 @@ module SimpleLayout
       container_pass_on(Gtk::Table, 'attach', left, left + 1, top, top + 1, *args)
     end
 
+    # menu stuff
+    def menu_bar(name, options = {}, &block)
+      cb = Proc.new do |id, w|
+        m = "menu_#{name}_on_active"
+        self.send(m, id, Gtk::ItemFactory.path_from_widget(w), w) if self.respond_to?(m)
+      end
+      @item_factory_stack ||= []
+      @item_factory_stack.push [cb, [], []]
+      block.call(name) if block
+      options[:id] ||= name.to_sym
+      _, _, items = @item_factory_stack.pop
+      accel_group = Gtk::AccelGroup.new
+      add_accel_group(accel_group)
+      fact = Gtk::ItemFactory.new(Gtk::ItemFactory::TYPE_MENU_BAR, "<#{name}>", accel_group)
+      fact.create_items(items)
+      layout_component(fact.get_widget("<#{name}>"), options, nil)
+    end
+
+    def sub_menu(name, &block)
+      _, stack, items = @item_factory_stack.last
+      name = "#{stack.last}/#{name}"
+      stack.push name
+      items << [name]
+      block.call if block
+      stack.pop
+    end
+
+    def menu_item(name, options = {})
+      cb, stack, items = @item_factory_stack.last
+      options[:type] ||= :Item
+      items << [  "#{stack.last}/#{name}",
+                  "<#{options[:type].to_s}>",
+                  options[:accel],
+                  options[:image],
+                  cb,
+                  options[:id] || name
+                ]
+    end
+
+    def radio_menu(name, options, &block)
+      # TODO: ...
+    end
+
     private
 
     def add_singleton_event_map(w)
@@ -297,18 +340,23 @@ module SimpleLayout
 
     # create a new UI component (container or widget)
     def create_component(component_class, args, block)
+      @common_attribute ||= []
+      options = {}
+      options = args.pop if args.last.is_a?(Hash)
+      options.merge! @common_attribute.last if @common_attribute.last
 
+      w = component_class.new(*args)
+      layout_component(w, options, block)
+    end
+
+    # layout the new UI component (container or widget)
+    def layout_component(w, options, block)
       @containers ||= []
       @pass_on_stack ||= []
       @components ||= {}
       @common_attribute ||= []
       @component_children ||= {}
 
-      options = {}
-      options = args.pop if args.last.is_a?(Hash)
-      options.merge! @common_attribute.last if @common_attribute.last
-
-      w = component_class.new(*args)
       add_singleton_event_map(w) # so that you can use: w.on_clicked{|*args| ... }
       
       name = options.delete(:id)
