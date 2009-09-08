@@ -232,8 +232,9 @@ module SimpleLayout
     end
 
     # menu stuff
-    def menu_bar(name, options = {}, &block)
+    def factory_menu_bar(name, options = {}, &block)
       cb = Proc.new do |id, w|
+        id = id.gsub('_', '') if id.is_a?(String)
         m = "menu_#{name}_on_active"
         self.send(m, id, Gtk::ItemFactory.path_from_widget(w), w) if self.respond_to?(m)
       end
@@ -246,32 +247,57 @@ module SimpleLayout
       add_accel_group(accel_group)
       fact = Gtk::ItemFactory.new(Gtk::ItemFactory::TYPE_MENU_BAR, "<#{name}>", accel_group)
       fact.create_items(items)
+      
+      # process item attributes
+      items.each do |x|
+        # TODO: ...
+      end
       layout_component(fact.get_widget("<#{name}>"), options, nil)
     end
 
-    def sub_menu(name, &block)
-      _, stack, items = @item_factory_stack.last
-      name = "#{stack.last}/#{name}"
-      stack.push name
-      items << [name]
-      block.call if block
-      stack.pop
-    end
-
-    def menu_item(name, options = {})
+    def factory_menu_item(name, options = {}, &block)
       cb, stack, items = @item_factory_stack.last
+      branch = false
       options[:type] ||= :Item
-      items << [  "#{stack.last}/#{name}",
+      case name
+      when /^[-]+$/
+        options[:type] = :Separator
+      when /^<[-]+$/
+        options[:type] = :Tearoff
+      when /^>>(.+)>>$/
+        name = $1
+        branch = true
+        options[:type] = :LastBranch
+      when /^<(.+)>$/
+        name = $1
+        branch = true
+        options[:type] = :Branch
+      end
+
+      image = options.delete(:image)
+      if image.is_a?(String)
+        options[:type] = :ImageItem
+        image = Gdk::Pixbuf.new(image)
+      elsif image.is_a?(Gdk::Pixbuf)
+        options[:type] = :ImageItem
+      elsif image
+        options[:type] = :StockItem
+      end
+
+      item = [  "#{stack.last}/#{name}",
                   "<#{options[:type].to_s}>",
                   options[:accel],
-                  options[:image],
+                  image,
                   cb,
                   options[:id] || name
                 ]
-    end
-
-    def radio_menu(name, options, &block)
-      # TODO: ...
+      items << item
+      if branch
+        stack.push "#{stack.last}/#{name}"
+        block.call(name) if block
+        stack.pop if branch
+      end
+      item
     end
 
     private
@@ -403,9 +429,10 @@ module SimpleLayout
       if @containers.size > 0
         add_component(insp_evb || w, container, layout_opt) # add myself to parent
       else
+        add_component(insp_evb || w, self, layout_opt) # add top container to host
         @components[:self] = self  # add host as ':self'
       end
-      insp_evb || w
+      w
     end
 
     def container_pass_on(container_class, fun_name, *args)

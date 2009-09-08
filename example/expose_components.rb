@@ -13,7 +13,7 @@ class MyWin < Gtk::Window
 
   def initialize
     super
-    add my_layout
+    my_layout
 
     expose_components()
     # after call expose_components(), btn_a and btn_b become available

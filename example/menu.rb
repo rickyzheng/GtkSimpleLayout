@@ -5,7 +5,7 @@ class MyWin < Gtk::Window
   include SimpleLayout::Base
   def initialize
     super
-    add my_layout
+    my_layout
     signal_connect('destroy') do
       Gtk.main_quit
     end
@@ -13,19 +13,26 @@ class MyWin < Gtk::Window
 
   def my_layout
     vbox do
-      menu_bar "main", :type => :menu do
-        sub_menu "_File" do
-          menu_item "_Open"
-          menu_item "_Close"
-          menu_item "_Quit", :accel => "<control>X"
+      factory_menu_bar "main", :type => :menu do
+        factory_menu_item "<_File>" do
+          factory_menu_item "_Open"
+          factory_menu_item "_Close"
+          factory_menu_item "---"
+          factory_menu_item "_Quit", :id => :quit, :accel => "<control>Q"
         end
-        sub_menu "Tools" do
-          sub_menu "Edit" do
-            menu_item "Copy"
-            menu_item "Cut"
-            menu_item "Paste"
+        factory_menu_item "<_Edit>" do
+          factory_menu_item "<---"
+          factory_menu_item "Copy", :accel => "<control>C"
+          factory_menu_item "Cut", :accel => "<control>X"
+          factory_menu_item "Paste", :accel => "<control>V"
+          factory_menu_item "<Advanced>" do
+            factory_menu_item "<---", :accel => "<control>A"
+            factory_menu_item "Zoom In", :image => Gtk::Stock::ZOOM_IN, :accel => "<control>plus"
+            factory_menu_item "Zoom Out", :image => Gtk::Stock::ZOOM_OUT, :accel => "<control>minus"
           end
-          menu_item "Option"
+        end
+        factory_menu_item ">>Help>>" do
+          factory_menu_item "About"
         end
       end
       scrolled_window :layout => [true, true] do
@@ -36,6 +43,9 @@ class MyWin < Gtk::Window
 
   def menu_main_on_active(id, path, w)
     puts "menu: #{id}, path: #{path}"
+    if id == :quit
+      self.destroy
+    end
   end
 
 end
