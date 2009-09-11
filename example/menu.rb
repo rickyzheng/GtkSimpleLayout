@@ -21,12 +21,12 @@ class MyWin < Gtk::Window
           factory_menu_item "_Quit", :id => :quit, :accel => "<control>Q"
         end
         factory_menu_item "<_Edit>" do
-          factory_menu_item "<---"
+          factory_menu_item "<--->"
           factory_menu_item "Copy", :accel => "<control>C"
           factory_menu_item "Cut", :accel => "<control>X"
           factory_menu_item "Paste", :accel => "<control>V"
-          factory_menu_item "<Advanced>" do
-            factory_menu_item "<---", :accel => "<control>A"
+          factory_menu_item "<Advanced>", :accel => "<control>S" do
+            factory_menu_item "<--->", :accel => "<control>A"
             factory_menu_item "Zoom In", :image => Gtk::Stock::ZOOM_IN, :accel => "<control>plus"
             factory_menu_item "Zoom Out", :image => Gtk::Stock::ZOOM_OUT, :accel => "<control>minus"
           end

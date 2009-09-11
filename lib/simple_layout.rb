@@ -262,7 +262,7 @@ module SimpleLayout
       case name
       when /^[-]+$/
         options[:type] = :Separator
-      when /^<[-]+$/
+      when /^<[-]+>$/
         options[:type] = :Tearoff
       when /^>>(.+)>>$/
         name = $1
@@ -388,6 +388,7 @@ module SimpleLayout
       name = options.delete(:id)
       group_name = options.delete(:gid) || name
       layout_opt = options.delete(:layout)
+      keep_top_cnt = options.delete(:keep_top_container)
 
       options.each do |k, v|
         if v.is_a?(Array)
@@ -429,7 +430,7 @@ module SimpleLayout
       if @containers.size > 0
         add_component(insp_evb || w, container, layout_opt) # add myself to parent
       else
-        add_component(insp_evb || w, self, layout_opt) # add top container to host
+        add_component(insp_evb || w, self, layout_opt) unless keep_top_cnt # add top container to host
         @components[:self] = self  # add host as ':self'
       end
       w
