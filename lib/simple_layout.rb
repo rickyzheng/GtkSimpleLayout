@@ -450,7 +450,7 @@ module SimpleLayout
     alias_method :simple_layout_method_missing_alias, :method_missing
 
     def method_missing(sym, *args, &block)
-      if sym =~ /^(.+)_in_(.+)$/
+      if sym.to_s =~ /^(.+)_in_(.+)$/
         maps = self.class.layout_class_maps
         inner, outter = $1, $2
         if maps[inner] && maps[outter]
