@@ -218,7 +218,7 @@ module SimpleLayout
 
     # for Notebook container
     def page(text = nil, &block)
-      container_pass_on(Gtk::Notebook, 'append_page', text, block)
+      container_pass_on(Gtk::Notebook, 'append_page', Gtk::Label.new(text), block)
     end
 
     # for Table container
@@ -252,7 +252,7 @@ module SimpleLayout
       items.each do |x|
         # TODO: ...
       end
-      layout_component(fact.get_widget("<#{name}>"), options, nil)
+      layout_component(fact.get_widget("<#{name}>"), options)
     end
 
     def factory_menu_item(name, options = {}, &block)
@@ -298,6 +298,67 @@ module SimpleLayout
         stack.pop if branch
       end
       item
+    end
+
+    # layout the new UI component (container or widget)
+    def layout_component(w, options = {}, &block)
+      @containers ||= []
+      @pass_on_stack ||= []
+      @components ||= {}
+      @common_attribute ||= []
+      @component_children ||= {}
+
+      add_singleton_event_map(w) # so that you can use: w.on_clicked{|*args| ... }
+
+      name = options.delete(:id)
+      group_name = options.delete(:gid) || name
+      layout_opt = options.delete(:layout)
+      keep_top_cnt = options.delete(:keep_top_container)
+
+      options.each do |k, v|
+        if v.is_a?(Array)
+          w.send(k.to_s, *v) if w.respond_to?(k.to_s)
+        else
+          w.send(k.to_s + '=', v) if w.respond_to?(k.to_s + '=')
+        end
+      end
+
+      @components[name] = w if name
+      gs = (group_name ? [group_name].flatten : [])
+      gs.each{|g| @component_children[g] ||= [] }
+
+      misc = nil
+      if @containers.size > 0
+        container, misc = @containers.last
+        misc[:groups].each{ |g| @component_children[g].push w }
+        misc[:sibling] += 1
+      end
+      insp_evb = make_inspect_evb(misc, w, name, layout_opt, options)
+
+      if block # if given block, it's a container as well
+        m = { :groups => gs,
+              :sibling => 0,
+              :insp => insp_evb,
+              :name => name,
+              :layout => layout_opt,
+              :options => options,
+            }
+        @containers.push [w, m]
+        @pass_on_stack.push [false, nil]
+        @common_attribute.push({})
+        block.call(w) if block
+        @common_attribute.pop
+        @pass_on_stack.pop
+        @containers.pop
+      end
+
+      if @containers.size > 0
+        add_component(insp_evb || w, container, layout_opt) # add myself to parent
+      else
+        add_component(insp_evb || w, self, layout_opt) unless keep_top_cnt # add top container to host
+        @components[:self] = self  # add host as ':self'
+      end
+      w
     end
 
     private
@@ -372,68 +433,7 @@ module SimpleLayout
       options.merge! @common_attribute.last if @common_attribute.last
 
       w = component_class.new(*args)
-      layout_component(w, options, block)
-    end
-
-    # layout the new UI component (container or widget)
-    def layout_component(w, options, block)
-      @containers ||= []
-      @pass_on_stack ||= []
-      @components ||= {}
-      @common_attribute ||= []
-      @component_children ||= {}
-
-      add_singleton_event_map(w) # so that you can use: w.on_clicked{|*args| ... }
-      
-      name = options.delete(:id)
-      group_name = options.delete(:gid) || name
-      layout_opt = options.delete(:layout)
-      keep_top_cnt = options.delete(:keep_top_container)
-
-      options.each do |k, v|
-        if v.is_a?(Array)
-          w.send(k.to_s, *v) if w.respond_to?(k.to_s)
-        else
-          w.send(k.to_s + '=', v) if w.respond_to?(k.to_s + '=')
-        end
-      end
-
-      @components[name] = w if name
-      gs = (group_name ? [group_name].flatten : [])
-      gs.each{|g| @component_children[g] ||= [] }
-
-      misc = nil
-      if @containers.size > 0
-        container, misc = @containers.last
-        misc[:groups].each{ |g| @component_children[g].push w }
-        misc[:sibling] += 1
-      end
-      insp_evb = make_inspect_evb(misc, w, name, layout_opt, options)
-
-      if block # if given block, it's a container as well
-        m = { :groups => gs,
-              :sibling => 0,
-              :insp => insp_evb,
-              :name => name,
-              :layout => layout_opt,
-              :options => options,
-            }
-        @containers.push [w, m]
-        @pass_on_stack.push [false, nil]
-        @common_attribute.push({})
-        block.call(w) if block
-        @common_attribute.pop
-        @pass_on_stack.pop
-        @containers.pop
-      end
-
-      if @containers.size > 0
-        add_component(insp_evb || w, container, layout_opt) # add myself to parent
-      else
-        add_component(insp_evb || w, self, layout_opt) unless keep_top_cnt # add top container to host
-        @components[:self] = self  # add host as ':self'
-      end
-      w
+      layout_component(w, options, &block)
     end
 
     def container_pass_on(container_class, fun_name, *args)
