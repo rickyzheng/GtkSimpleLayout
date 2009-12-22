@@ -92,7 +92,7 @@ module SimpleLayout
         'curve' => Gtk::Curve,
         'gamma_curve' => Gtk::GammaCurve,
         'hruler' => Gtk::HRuler,
-        'vruner' => Gtk::VRuler,
+        'vruler' => Gtk::VRuler,
       }
     end
 
