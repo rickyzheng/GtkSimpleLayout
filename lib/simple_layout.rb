@@ -333,7 +333,10 @@ module SimpleLayout
         misc[:groups].each{ |g| @component_children[g].push w }
         misc[:sibling] += 1
       end
-      insp_evb = make_inspect_evb(misc, w, name, layout_opt, options)
+
+      unless container and container.is_a? Gtk::ScrolledWindow
+        insp_evb = make_inspect_evb(misc, w, name, layout_opt, options)
+      end
 
       if block # if given block, it's a container as well
         m = { :groups => gs,
