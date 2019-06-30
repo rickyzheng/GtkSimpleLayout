@@ -1,4 +1,4 @@
-require 'gtk2'
+require 'gtk3'
 require File.dirname(__FILE__) + '/../lib/simple_layout'
 
 class MyWin < Gtk::Window
@@ -13,12 +13,12 @@ class MyWin < Gtk::Window
   end
 
   def my_layout
-    vbox do
+    box :vertical do
       with_attr :border_width => 3 do
-        hbox do
+        box :horizontal do
           entry :id => :ent_input, :layout => [true, true, 5]
         end
-        hbox do
+        box :horizontal do
           frame do
             label 'M', :set_size_request => [20, 20]
           end
@@ -28,7 +28,7 @@ class MyWin < Gtk::Window
             button 'C'
           end
         end
-        hbox do
+        box :horizontal do
           vbutton_box do
             button 'MC'
             button 'MR'
@@ -44,12 +44,12 @@ class MyWin < Gtk::Window
   end
 
   def number_and_operators_layout
-    vbox do
+    box :vertical do
       [ ['7', '8', '9', '/', 'sqt'],
         ['4', '5', '6', '*', '%'],
         ['1', '2', '3', '-', '1/x'],
         ['0', '+/-', '.', '+', '=']].each do |cols|
-        hbox :layout => [true, true] do
+        box :horizontal, :layout => [true, true] do
           cols.each do |txt|
             button txt, :id => txt.to_sym, :set_size_request => [30, 30], :layout => [true, true]
           end

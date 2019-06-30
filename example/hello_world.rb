@@ -1,4 +1,4 @@
-require 'gtk2'
+require 'gtk3'
 require File.dirname(__FILE__) + '/../lib/simple_layout'
 
 class MyWin < Gtk::Window
@@ -12,7 +12,7 @@ class MyWin < Gtk::Window
   end
 
   def my_layout
-    hbox do
+    box :horizontal do
       label 'Hello, '
       button 'World !'
     end

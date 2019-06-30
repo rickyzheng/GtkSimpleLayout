@@ -1,4 +1,4 @@
-require 'gtk2'
+require 'gtk3'
 
 module SimpleLayout
 
@@ -50,7 +50,7 @@ module SimpleLayout
         'cell_view' => Gtk::CellView,
         'icon_view' => Gtk::IconView,
         'combobox' => Gtk::ComboBox,
-        'combobox_entry' => Gtk::ComboBoxEntry,
+        #'combobox_entry' => Gtk::ComboBoxEntry,
         #'menu' => Gtk::Menu,
         #'menubar' => Gtk::MenuBar,
         'toolbar' => Gtk::Toolbar,
@@ -60,15 +60,14 @@ module SimpleLayout
         'toggle_tool_button' => Gtk::ToggleToolButton,
         'radio_tool_button' => Gtk::RadioToolButton,
         'color_button' => Gtk::ColorButton,
-        'color_selection' => Gtk::ColorSelection,
+        'color_chooser' => Gtk::ColorChooserWidget,
         'file_chooser_button' => Gtk::FileChooserButton,
         'file_chooser_widget' => Gtk::FileChooserWidget,
         'font_button' => Gtk::FontButton,
         'font_selection' => Gtk::FontSelection,
         'alignment' => Gtk::Alignment,
         'aspect_frame' => Gtk::AspectFrame,
-        'hbox' => Gtk::HBox,
-        'vbox' => Gtk::VBox,
+        'box' => Gtk::Box,
         'hbutton_box' => Gtk::HButtonBox,
         'vbutton_box' => Gtk::VButtonBox,
         'hpaned' => Gtk::HPaned,
@@ -89,10 +88,10 @@ module SimpleLayout
         'event_box' => Gtk::EventBox,
         'handle_box' => Gtk::HandleBox,
         'viewport' => Gtk::Viewport,
-        'curve' => Gtk::Curve,
-        'gamma_curve' => Gtk::GammaCurve,
-        'hruler' => Gtk::HRuler,
-        'vruler' => Gtk::VRuler,
+        #'curve' => Gtk::Curve,
+        #'gamma_curve' => Gtk::GammaCurve,
+        #'hruler' => Gtk::HRuler,
+        #'vruler' => Gtk::VRuler,
       }
     end
 
