@@ -32,62 +32,61 @@ module SimpleLayout
 
     def layout_class_maps
       @layout_class_maps_hash ||= {
-        'image' => Gtk::Image,
-        'label' => Gtk::Label,
-        'progress_bar' => Gtk::ProgressBar,
-        'status_bar' => Gtk::Statusbar,
-        'button' => Gtk::Button,
-        'check_button' => Gtk::CheckButton,
-        'radio_button' => Gtk::RadioButton,
-        'toggle_button' => Gtk::ToggleButton,
-        'link_button' => Gtk::LinkButton,
-        'entry' => Gtk::Entry,
-        'hscale' => Gtk::HScale,
-        'vscale' => Gtk::VScale,
-        'spin_button' => Gtk::SpinButton,
-        'text_view' => Gtk::TextView,
-        'tree_view' => Gtk::TreeView,
-        'cell_view' => Gtk::CellView,
-        'icon_view' => Gtk::IconView,
-        'combobox' => Gtk::ComboBox,
+        '_image' => Gtk::Image,
+        '_label' => Gtk::Label,
+        '_progress_bar' => Gtk::ProgressBar,
+        '_status_bar' => Gtk::Statusbar,
+        '_button' => Gtk::Button,
+        '_check_button' => Gtk::CheckButton,
+        '_radio_button' => Gtk::RadioButton,
+        '_toggle_button' => Gtk::ToggleButton,
+        '_link_button' => Gtk::LinkButton,
+        '_entry' => Gtk::Entry,
+        '_hscale' => Gtk::HScale,
+        '_vscale' => Gtk::VScale,
+        '_spin_button' => Gtk::SpinButton,
+        '_text_view' => Gtk::TextView,
+        '_tree_view' => Gtk::TreeView,
+        '_cell_view' => Gtk::CellView,
+        '_icon_view' => Gtk::IconView,
+        '_combobox' => Gtk::ComboBoxText,
         #'combobox_entry' => Gtk::ComboBoxEntry,
         #'menu' => Gtk::Menu,
         #'menubar' => Gtk::MenuBar,
-        'toolbar' => Gtk::Toolbar,
-        'toolitem' => Gtk::ToolItem,
-        'separator_toolitem' => Gtk::SeparatorToolItem,
-        'tool_button' => Gtk::ToolButton,
-        'toggle_tool_button' => Gtk::ToggleToolButton,
-        'radio_tool_button' => Gtk::RadioToolButton,
-        'color_button' => Gtk::ColorButton,
-        'color_chooser' => Gtk::ColorChooserWidget,
-        'file_chooser_button' => Gtk::FileChooserButton,
-        'file_chooser_widget' => Gtk::FileChooserWidget,
-        'font_button' => Gtk::FontButton,
-        'font_selection' => Gtk::FontSelection,
-        'alignment' => Gtk::Alignment,
-        'aspect_frame' => Gtk::AspectFrame,
-        'box' => Gtk::Box,
-        'hbutton_box' => Gtk::HButtonBox,
-        'vbutton_box' => Gtk::VButtonBox,
-        'hpaned' => Gtk::HPaned,
-        'vpaned' => Gtk::VPaned,
-        'layout' => Gtk::Layout,
-        'notebook' => Gtk::Notebook,
-        'table' => Gtk::Table,
-        'expander' => Gtk::Expander,
-        'frame' => Gtk::Frame,
-        'hseparator' => Gtk::HSeparator,
-        'vseparator' => Gtk::VSeparator,
-        'hscrollbar' => Gtk::HScrollbar,
-        'vscrollbar' => Gtk::VScrollbar,
-        'scrolled_window' => Gtk::ScrolledWindow,
-        'arrow' => Gtk::Arrow,
-        'calendar' => Gtk::Calendar,
-        'drawing_area' => Gtk::DrawingArea,
-        'event_box' => Gtk::EventBox,
-        'handle_box' => Gtk::HandleBox,
-        'viewport' => Gtk::Viewport,
+        '_toolbar' => Gtk::Toolbar,
+        '_toolitem' => Gtk::ToolItem,
+        '_separator_toolitem' => Gtk::SeparatorToolItem,
+        '_tool_button' => Gtk::ToolButton,
+        '_toggle_tool_button' => Gtk::ToggleToolButton,
+        '_radio_tool_button' => Gtk::RadioToolButton,
+        '_color_button' => Gtk::ColorButton,
+        '_color_chooser' => Gtk::ColorChooserWidget,
+        '_file_chooser_button' => Gtk::FileChooserButton,
+        '_file_chooser_widget' => Gtk::FileChooserWidget,
+        '_font_button' => Gtk::FontButton,
+        '_font_selection' => Gtk::FontSelection,
+        '_alignment' => Gtk::Alignment,
+        '_aspect_frame' => Gtk::AspectFrame,
+        '_box' => Gtk::Box,
+        '_button_box' => Gtk::ButtonBox,
+        '_hpaned' => Gtk::HPaned,
+        '_vpaned' => Gtk::VPaned,
+        '_layout' => Gtk::Layout,
+        '_notebook' => Gtk::Notebook,
+        '_table' => Gtk::Table,
+        '_expander' => Gtk::Expander,
+        '_frame' => Gtk::Frame,
+        '_hseparator' => Gtk::HSeparator,
+        '_vseparator' => Gtk::VSeparator,
+        '_hscrollbar' => Gtk::HScrollbar,
+        '_vscrollbar' => Gtk::VScrollbar,
+        '_scrolled_window' => Gtk::ScrolledWindow,
+        '_arrow' => Gtk::Arrow,
+        '_calendar' => Gtk::Calendar,
+        '_drawing_area' => Gtk::DrawingArea,
+        '_event_box' => Gtk::EventBox,
+        '_handle_box' => Gtk::HandleBox,
+        '_viewport' => Gtk::Viewport,
         #'curve' => Gtk::Curve,
         #'gamma_curve' => Gtk::GammaCurve,
         #'hruler' => Gtk::HRuler,
@@ -133,7 +132,7 @@ module SimpleLayout
 
     # add a widget to container (and/or become a new container as well).
     # do not call this function directly unless knowing what you are doing
-    def add_component(w, container, layout_opt = nil)
+    def add_component(w, container, layout_opt)
       if @pass_on_stack.last.nil? || @pass_on_stack.last[0] == false
         if container.is_a?(Gtk::Box)
           layout_opt ||= [false, false, 0]
@@ -141,7 +140,8 @@ module SimpleLayout
           if layout_opt.first.is_a?(Symbol)
             pack_method = 'pack_end' if layout_opt.shift == :end
           end
-          container.send(pack_method, w, *layout_opt)
+          opt = {expand: layout_opt[0], fill: layout_opt[1], padding: layout_opt[2]}  # convert to keywork arguments style
+          container.send(pack_method, w, **opt)
         elsif container.is_a?(Gtk::Fixed) || container.is_a?(Gtk::Layout)
           layout_opt ||= [0, 0]
           container.put w, *layout_opt
@@ -309,35 +309,43 @@ module SimpleLayout
 
       add_singleton_event_map(w) # so that you can use: w.on_clicked{|*args| ... }
 
+      # there are some special options: :id, :gid, :layout, :keep_top_container
+      # :id is the name of the component, :gid is the group name of the component, if :gid is not given, use :id as group name
+      # :layout is the layout options for the component, :keep_top_container is to keep the top container
       name = options.delete(:id)
       group_name = options.delete(:gid) || name
       layout_opt = options.delete(:layout)
       keep_top_cnt = options.delete(:keep_top_container)
 
+      # the rest of the key-value pairs are turn into the function calls if the widget response to the key
       options.each do |k, v|
-        if v.is_a?(Array)
+        if v.is_a?(Array)   # e.g. :set_size_request => [100, 100] turn into w.set_size_request(100, 100)
           w.send(k.to_s, *v) if w.respond_to?(k.to_s)
-        else
+        else                # e.g. :size => 10 turn into w.size = 10
           w.send(k.to_s + '=', v) if w.respond_to?(k.to_s + '=')
         end
       end
 
-      @components[name] = w if name
+      @components[name] = w if name   # add the widget to the components hash, if 'name' is given
+
+      # if :gid is given, create the group if the group is not exist
       gs = (group_name ? [group_name].flatten : [])
       gs.each{|g| @component_children[g] ||= [] }
 
-      misc = nil
+      parent, param = nil, nil
       if @containers.size > 0
-        container, misc = @containers.last
-        misc[:groups].each{ |g| @component_children[g].push w }
-        misc[:sibling] += 1
+        parent, param = @containers.last
+        param[:groups].each{ |g| @component_children[g].push w }   # add the widget to the parent's children group
+        param[:sibling] += 1    # record the sibling count
       end
 
-      unless container and container.is_a? Gtk::ScrolledWindow
-        insp_evb = make_inspect_evb(misc, w, name, layout_opt, options)
+      # if parent is a ScrolledWindow, create the inspector eventbox around the widget
+      insp_evb = nil
+      unless parent and parent.is_a?(Gtk::ScrolledWindow)
+        insp_evb = make_inspect_evb(param, w, name, layout_opt, options)
       end
 
-      if block # if given block, it's a container as well
+      if block # if given block, it's a container
         m = { :groups => gs,
               :sibling => 0,
               :insp => insp_evb,
@@ -345,7 +353,7 @@ module SimpleLayout
               :layout => layout_opt,
               :options => options,
             }
-        @containers.push [w, m]
+        @containers.push [w, m] # push the new container to the stack
         @pass_on_stack.push [false, nil]
         @common_attribute.push({})
         block.call(w) if block
@@ -355,7 +363,7 @@ module SimpleLayout
       end
 
       if @containers.size > 0
-        add_component(insp_evb || w, container, layout_opt) # add myself to parent
+        add_component(insp_evb || w, parent, layout_opt) # add myself to parent
       else
         add_component(insp_evb || w, self, layout_opt) unless keep_top_cnt # add top container to host
         @components[:self] = self  # add host as ':self'
@@ -384,13 +392,13 @@ module SimpleLayout
       insp_evb = nil
       insp_opt = self.class.inspector_opt
       if insp_opt[:enable]
-        rgb = 0xffff - @containers.size * 0x1000
+        rgb = 1 - @containers.size / 10.0
         insp_evb = evb = Gtk::EventBox.new
         sub_evb = Gtk::EventBox.new
         sub_evb.add w
         evb.add sub_evb
         sub_evb.border_width = insp_opt[:border_width]
-        evb.modify_bg Gtk::STATE_NORMAL, Gdk::Color.new(rgb, rgb, rgb)
+        evb.override_background_color :normal, Gdk::RGBA.new(rgb, rgb, rgb)
         evbs = []
         tips = ""
         @containers.size.times do |i|
@@ -434,7 +442,12 @@ module SimpleLayout
       options = args.pop if args.last.is_a?(Hash)
       options.merge! @common_attribute.last if @common_attribute.last
 
-      w = component_class.new(*args)
+      case component_class.to_s
+      when /Button$/
+        w = component_class.new(label: args[0])
+      else
+        w = component_class.new(*args)
+      end
       layout_component(w, options, &block)
     end
 
@@ -450,38 +463,34 @@ module SimpleLayout
       end
     end
 
-    alias_method :simple_layout_method_missing_alias, :method_missing
-
-    def method_missing(sym, *args, &block)
-      if sym.to_s =~ /^(.+)_in_(.+)$/
-        maps = self.class.layout_class_maps
-        inner, outter = $1, $2
-        if maps[inner] && maps[outter]
-          if args.last.is_a?(Hash)
-            options = {}
-            options = args.pop if args.last.is_a?(Hash)
-
-            # default args pass to inner component, execpt:
-            #  :layout pass to outter :layout
-            #  :inner_layout pass to inner :layout
-            #  :outter_args pass to outter args
-            outter_args, outter_layout_opt, options[:layout] =
-              options.delete(:outter_args), options.delete(:layout), options.delete(:inner_layout)
-
-            outter_args = (outter_args ? [outter_args] : []) unless outter_args.is_a?(Array)
-            outter_args << {} unless outter_args.last.is_a?(Hash)
-            outter_args.last[:layout] ||= outter_layout_opt
-            args.push options # push back inner options
-          end
-
-          inner_proc = Proc.new do
-            create_component(maps[inner], args, block)
-          end
-          return create_component(maps[outter], outter_args || [], inner_proc)
-        end
-      end
-      simple_layout_method_missing_alias(sym, *args, &block)
-    end
+    # alias_method :simple_layout_method_missing_alias, :method_missing
+    # def method_missing(sym, *args, &block)
+    #   if sym.to_s =~ /^(.+)_in_(.+)$/
+    #     maps = self.class.layout_class_maps
+    #     inner, outter = $1, $2
+    #     if maps[inner] && maps[outter]
+    #       if args.last.is_a?(Hash)
+    #         options = {}
+    #         options = args.pop if args.last.is_a?(Hash)
+    #         # default args pass to inner component, execpt:
+    #         #  :layout pass to outter :layout
+    #         #  :inner_layout pass to inner :layout
+    #         #  :outter_args pass to outter args
+    #         outter_args, outter_layout_opt, options[:layout] =
+    #           options.delete(:outter_args), options.delete(:layout), options.delete(:inner_layout)
+    #         outter_args = (outter_args ? [outter_args] : []) unless outter_args.is_a?(Array)
+    #         outter_args << {} unless outter_args.last.is_a?(Hash)
+    #         outter_args.last[:layout] ||= outter_layout_opt
+    #         args.push options # push back inner options
+    #       end
+    #       inner_proc = Proc.new do
+    #         create_component(maps[inner], args, block)
+    #       end
+    #       return create_component(maps[outter], outter_args || [], inner_proc)
+    #     end
+    #   end
+    #   simple_layout_method_missing_alias(sym, *args, &block)
+    # end
 
   end
 end

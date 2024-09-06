@@ -1,5 +1,5 @@
-require 'gtk2'
-require File.dirname(__FILE__) + '/../lib/simple_layout'
+require 'gtk3'
+require 'simple_layout'
 
 class MyWin < Gtk::Window
   include SimpleLayout::Base
@@ -12,27 +12,29 @@ class MyWin < Gtk::Window
   end
 
   def my_layout
-    vbox do
-      frame 'default' do
-        hbutton_box do
-          button 'A'
-          button 'B'
-          button 'C'
+    _box :vertical do
+      with_attr :border_width => 10 do
+        _frame 'default' do
+          _button_box :horizontal do
+            _button 'A'
+            _button 'B'
+            _button 'C'
+          end
         end
-      end
-      frame 'set :border_width => 10 for each button' do
-        hbutton_box do
-          button 'A', :border_width => 10
-          button 'B', :border_width => 10
-          button 'C', :border_width => 10
+        _frame 'set :border_width => 10 for each button' do
+          _button_box :horizontal do
+            _button 'A', :border_width => 10
+            _button 'B', :border_width => 10
+            _button 'C', :border_width => 10
+          end
         end
-      end
-      frame 'using with_attr :border_width => 10' do
-        hbutton_box do
-          with_attr :border_width => 10 do
-            button 'A'
-            button 'B'
-            button 'C'
+        _frame 'using with_attr :border_width => 10' do
+          _button_box :horizontal do
+            with_attr :border_width => 10 do
+              _button 'A'
+              _button 'B'
+              _button 'C'
+            end
           end
         end
       end

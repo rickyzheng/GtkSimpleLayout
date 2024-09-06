@@ -1,24 +1,24 @@
-require 'gtk2'
-require File.dirname(__FILE__) + '/../lib/simple_layout'
+require 'gtk3'
+require 'simple_layout'
 
 class MyWin < Gtk::Window
 	include SimpleLayout::Base
 
 	def my_layout
-		frame 'Serial Port Setup', :border_width => 5 do
-			vbox :border_width => 5 do
+		_frame 'Serial Port Setup', :border_width => 5 do
+			_box :vertical, :border_width => 5 do
         with_attr :border_width => 3, :layout => [true, true] do
-          hbox do
-            label 'Port name: '
-            combobox :id => :comb_port, :layout => [true, true]
+          _box :horizontal do
+            _label 'Port name: '
+            _combobox :id => :comb_port, :layout => [true, true]
           end
-          hbox do
-            label 'Baud rate: '
-            combobox :id => :comb_baudrate, :layout => [true, true]
+          _box :horizontal do
+            _label 'Baud rate: '
+            _combobox :id => :comb_baudrate, :layout => [true, true]
           end
-          hbutton_box do
-            button 'Open', :id => :btn_open, :sensitive => false
-            button 'Close', :id => :btn_close, :sensitive => false
+          _button_box :horizontal do
+            _button 'Open', :id => :btn_open, :sensitive => false
+            _button 'Close', :id => :btn_close, :sensitive => false
           end
         end
 			end
@@ -41,6 +41,10 @@ class MyWin < Gtk::Window
 		if RUBY_PLATFORM =~ /(mswin|mingw)/
 			(1..10).each do |n|
 				comb_port.append_text "COM#{n}"
+			end
+		elsif RUBY_PLATFORM =~ /darwin/
+			Dir.glob("/dev/cu.*").each do |name|
+				comb_port.append_text name
 			end
 		else
 			Dir.glob("/dev/ttyS*").each do |name|

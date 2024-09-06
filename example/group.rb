@@ -5,33 +5,33 @@ class MyWin < Gtk::Window
   include SimpleLayout::Base
 
   def my_layout
-    vbox do
-      hbox do
-        button 'Change group A', :id => :btn_change_a
-        button 'Change group B', :id => :btn_change_b
+    _box :vertical do
+      _box :horizontal do
+        _button 'Change group A', :id => :btn_change_a
+        _button 'Change group B', :id => :btn_change_b
       end
-      hbutton_box do
+      _button_box :horizontal do
         group :A do  # set group A
-          button 'A'
-          button 'A'
-          button 'A'
+          _button 'A'
+          _button 'A'
+          _button 'A'
         end
       end
-      hbutton_box do
+      button_box :horizontal do
         group :B do  # set group B
-          button 'B'
-          button 'B'
-          button 'B'
+          _button 'B'
+          _button 'B'
+          _button 'B'
         end
       end
-      hbutton_box do
+      _button_box :horizontal do
         group :A do  # you can set group A again !
-          button 'A'
-          button 'A'
+          _button 'A'
+          _button 'A'
         end
         group :B do  # you can set group B again !
-          button 'B'
-          button 'B'
+          _button 'B'
+          _button 'B'
         end
       end
     end

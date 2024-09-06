@@ -1,13 +1,13 @@
-require 'gtk2'
-require File.dirname(__FILE__) + '/../lib/simple_layout'
+require 'gtk3'
+require 'simple_layout'
 
 class MyWin < Gtk::Window
   include SimpleLayout::Base
 
   def my_layout
-    hbutton_box do
-      button 'A', :id => :btn_a
-      button 'B', :id => :btn_b
+    _button_box :horizontal do
+      _button 'A', :id => :btn_a
+      _button 'B', :id => :btn_b
     end
   end
 
