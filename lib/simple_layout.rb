@@ -135,13 +135,21 @@ module SimpleLayout
     def add_component(w, container, layout_opt)
       if @pass_on_stack.last.nil? || @pass_on_stack.last[0] == false
         if container.is_a?(Gtk::Box)
-          layout_opt ||= [false, false, 0]
+          layout_opt ||= [expand: false, fill: false, padding: 0]
           pack_method = 'pack_start'
-          if layout_opt.first.is_a?(Symbol)
-            pack_method = 'pack_end' if layout_opt.shift == :end
+          railse LayoutError, "layout_opt should be an Array" unless layout_opt.is_a?(Array)
+          if layout_opt.first.is_a?(Symbol) && layout_opt[0] == :end
+            layout_opt.shift  # remove the first ':end'
+            pack_method = 'pack_end'
           end
-          opt = {expand: layout_opt[0], fill: layout_opt[1], padding: layout_opt[2]}  # convert to keywork arguments style
-          container.send(pack_method, w, **opt)
+          if layout_opt.size == 1 && layout_opt.last.is_a?(Hash)
+            # if there is only one Hash in layout_opt, it's the keyword arguments for pack_start or pack_end
+            container.send(pack_method, w, **layout_opt.last)
+          else
+            # else it's the position arguments, old style, we need to conver to keyword arguments
+            opt = {expand: layout_opt[0], fill: layout_opt[1], padding: layout_opt[2]}
+            container.send(pack_method, w, **opt)
+          end
         elsif container.is_a?(Gtk::Fixed) || container.is_a?(Gtk::Layout)
           layout_opt ||= [0, 0]
           container.put w, *layout_opt
@@ -157,7 +165,8 @@ module SimpleLayout
           # should use #page to add a child to Notebook
         elsif container.is_a?(Gtk::Paned)
           # should use #area_first or #area_second to add child to Paned
-        elsif container.is_a?(Gtk::Container)
+        elsif container.is_a?(Gtk::Container) || container.respond_to?(:add)
+          # lastly, if it's a general container or response to 'add', use #add to add child
           layout_opt ||= []
           container.add(w, *layout_opt)
         end
@@ -361,7 +370,7 @@ module SimpleLayout
         @containers.push [w, m] # push the new container to the stack
         @pass_on_stack.push [false, nil]
         @common_attribute.push({})
-        block.call(w) if block
+        block.call(w) # create the children
         @common_attribute.pop
         @pass_on_stack.pop
         @containers.pop
@@ -450,7 +459,7 @@ module SimpleLayout
             evbs[i].override_background_color :normal, inspect_box_color(level: i, mode: :leave)
           end
         end
-        
+
       end
       insp_evb
     end
