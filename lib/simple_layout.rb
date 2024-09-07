@@ -251,7 +251,7 @@ module SimpleLayout
       items.each do |x|
         # TODO: ...
       end
-      layout_component(fact.get_widget("<#{name}>"), options)
+      layout_component(fact.get_widget("<#{name}>"), [], options)
     end
 
     def factory_menu_item(name, options = {}, &block)
@@ -300,7 +300,11 @@ module SimpleLayout
     end
 
     # layout the new UI component (container or widget)
-    def layout_component(w, options = {}, &block)
+    # w: the widget
+    # args: the arguments for creating the widget (just for inspection purpose)
+    # options: the options for layout the widget
+    # block: the block for creating the children
+    def layout_component(w, args, options = {}, &block)
       @containers ||= []
       @pass_on_stack ||= []
       @components ||= {}
@@ -342,7 +346,7 @@ module SimpleLayout
       # if parent is a ScrolledWindow, create the inspector eventbox around the widget
       insp_evb = nil
       unless parent and parent.is_a?(Gtk::ScrolledWindow)
-        insp_evb = make_inspect_evb(param, w, name, layout_opt, options)
+        insp_evb = make_inspect_evb(param, w, name, args, layout_opt, options)
       end
 
       if block # if given block, it's a container
@@ -352,6 +356,7 @@ module SimpleLayout
               :name => name,
               :layout => layout_opt,
               :options => options,
+              :args => args,
             }
         @containers.push [w, m] # push the new container to the stack
         @pass_on_stack.push [false, nil]
@@ -387,18 +392,31 @@ module SimpleLayout
       end
     end
 
+    # create the inspector eventbox color
+    # level: the level of the container stack
+    # mode: :enter or :leave
+    def inspect_box_color(level:, mode:)
+      @evb_colors ||= {}  # color cache
+      rgb = 1 - (level+2) / 12.0
+      case mode
+      when :enter
+        @evb_colors["#{level}_#{mode}"] ||= Gdk::RGBA.new(rgb, rgb + 0.2, rgb + 0.2, 1)
+      when :leave
+        @evb_colors["#{level}_#{mode}"] ||= Gdk::RGBA.new(rgb, rgb, rgb, 0.6)
+      end
+    end
+
     # create the inspector eventbox for widget
-    def make_inspect_evb(cnt_misc, w, name, layout_opt, options)
+    def make_inspect_evb(cnt_misc, w, name, args, layout_opt, options)
       insp_evb = nil
       insp_opt = self.class.inspector_opt
       if insp_opt[:enable]
-        rgb = 1 - @containers.size / 10.0
         insp_evb = evb = Gtk::EventBox.new
         sub_evb = Gtk::EventBox.new
         sub_evb.add w
         evb.add sub_evb
-        sub_evb.border_width = insp_opt[:border_width]
-        evb.override_background_color :normal, Gdk::RGBA.new(rgb, rgb, rgb)
+        sub_evb.border_width = insp_opt[:border_width].to_i
+        evb.override_background_color :normal, inspect_box_color(level: @containers.size, mode: :leave)
         evbs = []
         tips = ""
         @containers.size.times do |i|
@@ -406,6 +424,7 @@ module SimpleLayout
           if m[:insp] && (not m[:virtual])
             evbs << m[:insp]
             tips << "<b>container[#{i}]: #{cnt.class}#{m[:name] ? " (#{m[:name]})" : ''}</b>\n"
+            tips << "  args: #{m[:args].inspect}\n" if m[:args] && m[:args].size > 0
             tips << "  layout: #{m[:layout].inspect}\n" if m[:layout]
             tips << "  options: #{m[:options].inspect}\n" if m[:options] && m[:options].size > 0
             tips << "  groups: #{m[:groups].inspect}\n" if m[:groups].size > 0
@@ -413,24 +432,25 @@ module SimpleLayout
         end
         evbs << evb
         tips << "<b>widget: #{w.class}#{name ? " (#{name})" : ''}</b>\n"
+        tips << "  args: #{args.inspect}\n" if args && args.size > 0
         tips << "  layout: #{layout_opt.inspect}\n" if layout_opt
         tips << "  options: #{options.inspect}\n" if options && options.size > 0
         tips << "  groups: #{cnt_misc[:groups].inspect}\n" if cnt_misc && cnt_misc[:groups].size > 0
 
-        evb.signal_connect('event') do |b, evt|
+        evb.signal_connect('enter-notify-event') do |b, _|
           b.tooltip_markup = tips
-          case evt.event_type
-          when Gdk::Event::ENTER_NOTIFY, Gdk::Event::LEAVE_NOTIFY            
-            evbs.size.times do |i|
-              rgb = 0xffff - i * 0x1000
-              if evt.event_type == Gdk::Event::ENTER_NOTIFY
-                evbs[i].modify_bg Gtk::STATE_NORMAL, Gdk::Color.new(rgb, rgb - 0x2000, rgb - 0x2000)
-              elsif evt.event_type == Gdk::Event::LEAVE_NOTIFY
-                evbs[i].modify_bg Gtk::STATE_NORMAL, Gdk::Color.new(rgb, rgb, rgb)
-              end
-            end
+          evbs.size.times do |i|
+            evbs[i].override_background_color :normal, inspect_box_color(level: i, mode: :enter)
           end
         end
+
+        evb.signal_connect('leave-notify-event') do |b, _|
+          b.tooltip_markup = nil
+          evbs.size.times do |i|
+            evbs[i].override_background_color :normal, inspect_box_color(level: i, mode: :leave)
+          end
+        end
+        
       end
       insp_evb
     end
@@ -448,7 +468,7 @@ module SimpleLayout
       else
         w = component_class.new(*args)
       end
-      layout_component(w, options, &block)
+      layout_component(w, args, options, &block)
     end
 
     def container_pass_on(container_class, fun_name, *args)
