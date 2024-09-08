@@ -51,8 +51,13 @@ module SimpleLayout
         '_icon_view' => Gtk::IconView,
         '_combobox' => Gtk::ComboBoxText,
         #'combobox_entry' => Gtk::ComboBoxEntry,
-        #'menu' => Gtk::Menu,
-        #'menubar' => Gtk::MenuBar,
+        '_menu' => Gtk::Menu,
+        '_menubar' => Gtk::MenuBar,
+        '_menuitem' => Gtk::MenuItem,
+        '_menuitem_radio' => Gtk::RadioMenuItem,
+        '_menuitem_check' => Gtk::CheckMenuItem,
+        '_menuitem_separator' => Gtk::SeparatorMenuItem,
+        '_menuitem_teoroff' => Gtk::TearoffMenuItem,
         '_toolbar' => Gtk::Toolbar,
         '_toolitem' => Gtk::ToolItem,
         '_separator_toolitem' => Gtk::SeparatorToolItem,
@@ -153,12 +158,23 @@ module SimpleLayout
         elsif container.is_a?(Gtk::Fixed) || container.is_a?(Gtk::Layout)
           layout_opt ||= [0, 0]
           container.put w, *layout_opt
-        elsif container.is_a?(Gtk::MenuShell)
+        elsif container.is_a?(Gtk::MenuShell) || container.is_a?(Gtk::MenuBar) || container.is_a?(Gtk::Menu)
           container.append w
+        elsif container.is_a?(Gtk::MenuItem)
+          container.submenu = w
         elsif container.is_a?(Gtk::Toolbar)
           container.insert(container.n_items, w)
         elsif container.is_a?(Gtk::MenuToolButton)
           container.menu = w
+        elsif container.is_a?(Gtk::ScrolledWindow)
+          container.add_with_viewport(w)
+          if layout_opt && layout_opt.size > 0
+            if layout_opt.size == 1 && layout_opt.first.is_a?(Hash)
+              container.set_policy(**layout_opt.first)
+            else
+              container.set_policy(*layout_opt)
+            end
+          end
         elsif container.is_a?(Gtk::Table)
           # should use #grid or #grid_flx to add a child to Table
         elsif container.is_a?(Gtk::Notebook)
@@ -167,8 +183,8 @@ module SimpleLayout
           # should use #area_first or #area_second to add child to Paned
         elsif container.is_a?(Gtk::Container) || container.respond_to?(:add)
           # lastly, if it's a general container or response to 'add', use #add to add child
-          layout_opt ||= []
-          container.add(w, *layout_opt)
+          args = [w, *layout_opt].flatten
+          container.add(*args)
         end
       else
         fun_name, args = *(@pass_on_stack.last[1])
@@ -329,6 +345,8 @@ module SimpleLayout
       group_name = options.delete(:gid) || name
       layout_opt = options.delete(:layout)
       keep_top_cnt = options.delete(:keep_top_container)
+      accel_group = options.delete(:accel_group)
+      accel = options.delete(:accel)
 
       # the rest of the key-value pairs are turn into the function calls if the widget response to the key
       options.each do |k, v|
@@ -350,6 +368,10 @@ module SimpleLayout
         parent, param = @containers.last
         param[:groups].each{ |g| @component_children[g].push w }   # add the widget to the parent's children group
         param[:sibling] += 1    # record the sibling count
+
+        # if the widget is a menuitem, add the accelerator to the menuitem
+        menuitem_add_accel_group(w, accel, param[:accel_group]) if accel && param[:accel_group]
+
       end
 
       # if parent is a ScrolledWindow, create the inspector eventbox around the widget
@@ -359,6 +381,9 @@ module SimpleLayout
       end
 
       if block # if given block, it's a container
+
+        # if the widget options has :accel_group (a menu widget), create a new accelerator group to the container(menu)
+        @components[accel_group] = Gtk::AccelGroup.new if accel_group
         m = { :groups => gs,
               :sibling => 0,
               :insp => insp_evb,
@@ -366,6 +391,7 @@ module SimpleLayout
               :layout => layout_opt,
               :options => options,
               :args => args,
+              :accel_group => accel_group,
             }
         @containers.push [w, m] # push the new container to the stack
         @pass_on_stack.push [false, nil]
@@ -399,6 +425,54 @@ module SimpleLayout
           end
         end
       end
+    end
+
+    # add accelerator to the munuitem
+    # w: the menuitem widget
+    # accel: the accelerator string
+    # accel_group: the accelerator group id
+    def menuitem_add_accel_group(w, accel, accel_group)
+      # if accel is given, the widget is a menuitem, parse the accel string and add the accelerator to the widget
+      if w && @components[accel_group] && accel && w.is_a?(Gtk::MenuItem) #w.respond_to?(:add_accelerator)
+        if accel.to_s =~ /^<(.+)>(.*)$/
+          ctl, key = $1, $2
+          mask, kc = nil, nil
+          case ctl.downcase
+          when 'ctrl', 'control'
+            mask = Gdk::ModifierType::CONTROL_MASK
+          when 'alt'
+            mask = Gdk::ModifierType::MOD1_MASK
+          when 'meta', 'cmd', 'command'
+            if RUBY_PLATFORM =~ /darwin/
+              mask = Gdk::ModifierType::META_MASK
+            else
+              mask = Gdk::ModifierType::MOD1_MASK # for non-Mac, use Alt
+            end
+          when 'shift'
+            mask = Gdk::ModifierType::SHIFT_MASK
+          else
+            mask = nil
+          end
+
+          case key.downcase
+          when 'f1'..'f12'
+            kc = Gdk::Keyval.const_get("GDK_KEY_#{key}")
+          when 'a'..'z'
+            kc = Gdk::Keyval.const_get("KEY_#{key.upcase}")
+          when 'plus'
+            kc = Gdk::Keyval::GDK_PLUS
+          when 'minus'
+            kc = Gdk::Keyval::GDK_MINUS
+          else
+            kc = nil
+          end
+    
+          if mask && kc
+            w.add_accelerator('activate', @components[accel_group], kc, mask, Gtk::AccelFlags::VISIBLE)
+          end
+        end
+      end
+
     end
 
     # create the inspector eventbox color
@@ -471,11 +545,17 @@ module SimpleLayout
       options = args.pop if args.last.is_a?(Hash)
       options.merge! @common_attribute.last if @common_attribute.last
 
-      case component_class.to_s
-      when /Button$/
-        w = component_class.new(label: args[0])
+      if args.size == 1 && args.first.is_a?(Array) && args.first.size == 1 && args.first.first.is_a?(Hash)
+        w = component_class.new(**args.first.first)
       else
-        w = component_class.new(*args)
+        case component_class.to_s
+        when /(Button)$/
+          w = component_class.new(label: args[0])
+        when /(MenuItem)$/
+          w = component_class.new(label: args[0])
+        else
+          w = component_class.new(*args)
+        end
       end
       layout_component(w, args, options, &block)
     end
