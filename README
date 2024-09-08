@@ -1,9 +1,9 @@
 == GtkSimpleLayout ==
 
-The GtkSimpleLayout is a helper module for RubyGnome2, it provides a builder
+The GtkSimpleLayout is a helper module for RubyGtk3, it provides a builder
 style layout producing much better readable UI codes.
 
-Copy Right 2009, Ricky Zheng <ricky_gz_zheng@yahoo.co.nz>
+Copyright 2009, Ricky Zheng <ricky_gz_zheng@yahoo.co.nz>
 
 Licence: GPLv2
 
@@ -22,7 +22,7 @@ About inspector:
 
 == Example ==
 
-require 'gtk2'
+require 'gtk3'
 require 'simple_layout'
 
 class MyWin < Gtk::Window
@@ -36,9 +36,9 @@ class MyWin < Gtk::Window
   end
 
   def my_layout
-    vbox do
-      label 'Hello'
-      button 'World !'
+    _box :vertical do
+      _label 'Hello'
+      _button 'World !'
     end
   end
 end

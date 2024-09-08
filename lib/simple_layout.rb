@@ -182,7 +182,7 @@ module SimpleLayout
         elsif container.is_a?(Gtk::Paned)
           # should use #area_first or #area_second to add child to Paned
         elsif container.is_a?(Gtk::Container) || container.respond_to?(:add)
-          # lastly, if it's a general container or response to 'add', use #add to add child
+          # lastly, if it's a general container or respond to 'add', use #add to add child
           args = [w, *layout_opt].flatten
           container.add(*args)
         end
@@ -225,6 +225,7 @@ module SimpleLayout
             :insp => misc[:insp],
             :layout => misc[:layout],
             :options => misc[:options],
+            :accel_group => misc[:accel_group],
             :name => nil,
           }
       @containers.push [cnt, m]
