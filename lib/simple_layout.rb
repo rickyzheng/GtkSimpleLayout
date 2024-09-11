@@ -42,8 +42,9 @@ module SimpleLayout
         '_toggle_button' => Gtk::ToggleButton,
         '_link_button' => Gtk::LinkButton,
         '_entry' => Gtk::Entry,
-        '_hscale' => Gtk::HScale,
-        '_vscale' => Gtk::VScale,
+        '_scale' => Gtk::Scale,
+        '_hscale' => [Gtk::Scale, :horizontal],
+        '_vscale' => [Gtk::Scale, :vertical],
         '_spin_button' => Gtk::SpinButton,
         '_text_view' => Gtk::TextView,
         '_tree_view' => Gtk::TreeView,
@@ -73,18 +74,25 @@ module SimpleLayout
         '_alignment' => Gtk::Alignment,
         '_aspect_frame' => Gtk::AspectFrame,
         '_box' => Gtk::Box,
+        '_vbox' => [Gtk::Box, :vertical],
+        '_hbox' => [Gtk::Box, :horizontal],
         '_button_box' => Gtk::ButtonBox,
-        '_hpaned' => Gtk::HPaned,
-        '_vpaned' => Gtk::VPaned,
+        '_vbutton_box' => [Gtk::ButtonBox, :vertical],
+        '_hbutton_box' => [Gtk::ButtonBox, :horizontal],
+        '_paned' => Gtk::Paned,
+        '_hpaned' => [Gtk::Paned, :horizontal],
+        '_vpaned' => [Gtk::Paned, :vertical],
         '_layout' => Gtk::Layout,
         '_notebook' => Gtk::Notebook,
         '_table' => Gtk::Table,
         '_expander' => Gtk::Expander,
         '_frame' => Gtk::Frame,
-        '_hseparator' => Gtk::HSeparator,
-        '_vseparator' => Gtk::VSeparator,
-        '_hscrollbar' => Gtk::HScrollbar,
-        '_vscrollbar' => Gtk::VScrollbar,
+        '_separator' => Gtk::Separator,
+        '_hseparator' => [Gtk::Separator, :horizontal],
+        '_vseparator' => [Gtk::Separator, :vertical],
+        '_scrollbar' => Gtk::Scrollbar,
+        '_hscrollbar' => [Gtk::Scrollbar, :horizontal],
+        '_vscrollbar' => [Gtk::Scrollbar, :vertical],
         '_scrolled_window' => Gtk::ScrolledWindow,
         '_arrow' => Gtk::Arrow,
         '_calendar' => Gtk::Calendar,
@@ -407,7 +415,7 @@ module SimpleLayout
       else
         @components[:self] = self  # add host as ':self'
       end
-      w
+      insp_evb || w
     end
 
     private
@@ -538,9 +546,15 @@ module SimpleLayout
     end
 
     # create a new UI component (container or widget)
-    def create_component(component_class, args, block)
+    def create_component(class_desc, args, block)
       @common_attribute ||= []
       options = {}
+      if class_desc.is_a?(Array) # for virtual widget that use existing widget with specific args, e.g [Gtk::Box, :vertical]
+        component_class = class_desc[0]
+        args = class_desc[1..-1] + args
+      else
+        component_class = class_desc
+      end
       options = args.pop if args.last.is_a?(Hash)
       options.merge! @common_attribute.last if @common_attribute.last
 
@@ -557,7 +571,6 @@ module SimpleLayout
         end
       end
       layout_component(w, args, options, &block)
-      w
     end
 
     def container_pass_on(container_class, fun_name, *args)
@@ -572,34 +585,34 @@ module SimpleLayout
       end
     end
 
-    # alias_method :simple_layout_method_missing_alias, :method_missing
-    # def method_missing(sym, *args, &block)
-    #   if sym.to_s =~ /^(.+)_in_(.+)$/
-    #     maps = self.class.layout_class_maps
-    #     inner, outter = $1, $2
-    #     if maps[inner] && maps[outter]
-    #       if args.last.is_a?(Hash)
-    #         options = {}
-    #         options = args.pop if args.last.is_a?(Hash)
-    #         # default args pass to inner component, execpt:
-    #         #  :layout pass to outter :layout
-    #         #  :inner_layout pass to inner :layout
-    #         #  :outter_args pass to outter args
-    #         outter_args, outter_layout_opt, options[:layout] =
-    #           options.delete(:outter_args), options.delete(:layout), options.delete(:inner_layout)
-    #         outter_args = (outter_args ? [outter_args] : []) unless outter_args.is_a?(Array)
-    #         outter_args << {} unless outter_args.last.is_a?(Hash)
-    #         outter_args.last[:layout] ||= outter_layout_opt
-    #         args.push options # push back inner options
-    #       end
-    #       inner_proc = Proc.new do
-    #         create_component(maps[inner], args, block)
-    #       end
-    #       return create_component(maps[outter], outter_args || [], inner_proc)
-    #     end
-    #   end
-    #   simple_layout_method_missing_alias(sym, *args, &block)
-    # end
+    alias_method :simple_layout_method_missing_alias, :method_missing
+    def method_missing(sym, *args, &block)
+      if sym.to_s =~ /^(.+)_in(_.+)$/
+        maps = self.class.layout_class_maps
+        inner, outter = $1, $2
+        if maps[inner] && maps[outter]
+          if args.last.is_a?(Hash)
+            options = {}
+            options = args.pop if args.last.is_a?(Hash)
+            # default args pass to inner component, execpt:
+            #  :layout pass to outter :layout
+            #  :inner_layout pass to inner :layout
+            #  :outter_args pass to outter args
+            outter_args, outter_layout_opt, options[:layout] =
+              options.delete(:outter_args), options.delete(:layout), options.delete(:inner_layout)
+            outter_args = (outter_args ? [outter_args] : []) unless outter_args.is_a?(Array)
+            outter_args << {} unless outter_args.last.is_a?(Hash)
+            outter_args.last[:layout] ||= outter_layout_opt
+            args.push options # push back inner options
+          end
+          inner_proc = Proc.new do
+            create_component(maps[inner], args, block)
+          end
+          return create_component(maps[outter], outter_args || [], inner_proc)
+        end
+      end
+      simple_layout_method_missing_alias(sym, *args, &block)
+    end
 
   end
 end

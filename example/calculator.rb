@@ -13,23 +13,23 @@ class MyWin < Gtk::Window
   end
 
   def my_layout
-    _box :vertical do
+    _vbox do
       with_attr :border_width => 3 do
-        _box :horizontal do
+        _hbox do
           _entry :id => :ent_input, :layout => [true, true, 5]
         end
-        _box :horizontal do
+        _hbox do
           _frame do
             _label 'M', :set_size_request => [20, 20]
           end
-          _button_box :horizontal do
+          _hbutton_box do
             _button 'Backspace'
             _button 'CE'
             _button 'C'
           end
         end
-        _box :horizontal do
-          _button_box :vertical do
+        _hbox do
+          _vbutton_box do
             _button 'MC'
             _button 'MR'
             _button 'MS'
@@ -44,12 +44,12 @@ class MyWin < Gtk::Window
   end
 
   def number_and_operators_layout
-    _box :vertical do
+    _vbox do
       [ ['7', '8', '9', '/', 'sqt'],
         ['4', '5', '6', '*', '%'],
         ['1', '2', '3', '-', '1/x'],
         ['0', '+/-', '.', '+', '=']].each do |cols|
-        _box :horizontal, :layout => [true, true] do
+        _hbox :layout => [true, true] do
           cols.each do |txt|
             _button txt, :id => txt.to_sym, :set_size_request => [30, 30], :layout => [true, true]
           end
