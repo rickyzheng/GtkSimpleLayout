@@ -5,7 +5,7 @@ class MyWin < Gtk::Window
   include SimpleLayout::Base
   def initialize
     super
-    my_layout
+    add my_layout()
     signal_connect('destroy') do
       Gtk.main_quit
     end

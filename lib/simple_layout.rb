@@ -339,13 +339,12 @@ module SimpleLayout
 
       add_singleton_event_map(w) # so that you can use: w.on_clicked{|*args| ... }
 
-      # there are some special options: :id, :gid, :layout, :keep_top_container
+      # there are some special options: :id, :gid, :layout
       # :id is the name of the component, :gid is the group name of the component, if :gid is not given, use :id as group name
-      # :layout is the layout options for the component, :keep_top_container is to keep the top container
+      # :layout is the layout options for the component
       name = options.delete(:id)
       group_name = options.delete(:gid) || name
       layout_opt = options.delete(:layout)
-      keep_top_cnt = options.delete(:keep_top_container)
       accel_group = options.delete(:accel_group)
       accel = options.delete(:accel)
 
@@ -406,7 +405,6 @@ module SimpleLayout
       if @containers.size > 0
         add_component(insp_evb || w, parent, layout_opt) # add myself to parent
       else
-        add_component(insp_evb || w, self, layout_opt) unless keep_top_cnt # add top container to host
         @components[:self] = self  # add host as ':self'
       end
       w
@@ -559,6 +557,7 @@ module SimpleLayout
         end
       end
       layout_component(w, args, options, &block)
+      w
     end
 
     def container_pass_on(container_class, fun_name, *args)

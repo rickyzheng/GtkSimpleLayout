@@ -41,7 +41,7 @@ class MyWin < Gtk::Window
     super
     @count_a = 0
     @count_b = 0
-    my_layout
+    add my_layout()
 
     register_auto_events()
 

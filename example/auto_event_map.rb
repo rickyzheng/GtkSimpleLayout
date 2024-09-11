@@ -15,7 +15,7 @@ class MyWin < Gtk::Window
   def initialize
     super
     @click_count = 0
-    my_layout
+    add my_layout()
 
     register_auto_events()  # enable the auto event map
 

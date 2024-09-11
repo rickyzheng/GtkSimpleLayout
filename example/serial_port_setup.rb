@@ -28,7 +28,7 @@ class MyWin < Gtk::Window
 	def initialize
 		super
 
-		my_layout
+		add my_layout()
 
 		register_auto_events()
     expose_components()
