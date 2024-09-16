@@ -100,6 +100,7 @@ module SimpleLayout
         '_event_box' => Gtk::EventBox,
         '_handle_box' => Gtk::HandleBox,
         '_viewport' => Gtk::Viewport,
+        '_fixed' => Gtk::Fixed,
         #'curve' => Gtk::Curve,
         #'gamma_curve' => Gtk::GammaCurve,
         #'hruler' => Gtk::HRuler,

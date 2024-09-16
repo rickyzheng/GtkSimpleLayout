@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'GtkSimpleLayout'
-  s.version = '0.3.0'
+  s.version = '0.3.1'
   s.license = 'GPL-2.0-or-later'
   s.required_ruby_version = '>= 2.5.0'
   s.homepage = "https://github.com/rickyzheng/GtkSimpleLayout"
